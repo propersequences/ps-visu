@@ -4,7 +4,8 @@
 
 ---
 
-[![Instagram](https://img.shields.io/badge/INSTAGRAM-PROPER__MASTERING-000000?style=for-the-badge&logo=instagram&logoColor=d6ff00)](https://www.instagram.com/proper.mastering/)  |  [<kbd>▧ LABEL // Proper Sequences</kbd>](https://www.instagram.com/propersequences/)
+[![Instagram](https://img.shields.io/badge/INSTAGRAM-PROPER__MASTERING-000000?style=for-the-badge&logo=instagram&logoColor=d6ff00)](https://www.instagram.com/proper.mastering/) 
+|  [<kbd>▧ LABEL // Proper Sequences</kbd>](https://www.instagram.com/propersequences/)
 
 ---
 
