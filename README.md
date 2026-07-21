@@ -1,4 +1,4 @@
-<div align="left">
+<div align="center">
 
 <img src="https://i1.sndcdn.com/avatars-iRq2ZXOqfzBsgaO1-pEbIHg-t500x500.jpg" width="160" alt="Proper Sequences"/>
 
