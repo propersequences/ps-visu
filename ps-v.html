@@ -1,165 +1,105 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PS | Audio Visualizer v2</title>
-<link rel="icon" type="image/jpeg" href="https://i1.sndcdn.com/avatars-iRq2ZXOqfzBsgaO1-pEbIHg-t500x500.jpg">
-<link rel="stylesheet" href="./css/main.css">
+<title>PS | AUDIO HUD 📎</title>
+<link rel="stylesheet" href="css/main.css">
 </head>
 <body>
 
-<div class="top-logo">
-  <img src="https://i1.sndcdn.com/avatars-iRq2ZXOqfzBsgaO1-pEbIHg-t500x500.jpg" alt="PS logo">
-</div>
-
-<div class="dashboard">
-  <div class="panel p-header">
+<div class="hud-container">
+  <!-- HEADER -->
+  <header class="hud-panel p-header">
     <div class="brand">
-      <h1>Proper v-Sualizer</h1>
-      <span>PS | v2</span>
+      <h1>PS VISUALIZER</h1>
+      <span class="badge">SYS.HUD_CORE</span>
     </div>
-    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-      <span id="fileName" style="color: var(--txt-dim); font-size: 9px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">[ NULL_INPUT ]</span>
+    <div class="controls">
+      <span id="fileName" class="readout">[ WAITING_FOR_DATA ]</span>
       <div class="file-wrap">
-        <button class="btn" data-text="LOAD_SRC">LOAD_SRC</button>
+        <button class="btn">INJECT_DATA</button>
         <input type="file" id="fileInput" accept="audio/*" multiple>
       </div>
-      <button class="btn" id="micBtn" data-text="MIC">MIC</button>
-      <button class="btn" id="prevBtn" data-text="PREV">PREV</button>
-      <button class="btn" id="playBtn" data-text="INIT_PLAY">INIT_PLAY</button>
-      <button class="btn" id="nextBtn" data-text="NEXT">NEXT</button>
-      <button class="btn" id="abBtn" data-text="A/B" onclick="document.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyA'}))">A/B</button>
-      <span id="abLabel" style="color: var(--accent); font-size: 9px;">SLOT_A</span>
-      <div style="font-size: 10px; padding: 4px 10px; border: 1px solid var(--border); color: var(--accent); font-variant-numeric: tabular-nums;" id="timeDisplay">00:00 / 00:00</div>
+      <button class="btn" id="prevBtn">|<</button>
+      <button class="btn accent" id="playBtn">EXECUTE</button>
+      <button class="btn" id="nextBtn">>|</button>
+      <div id="timeDisplay" class="readout highlight">00:00 / 00:00</div>
     </div>
-  </div>
+  </header>
 
-  <div class="panel p-main">
+  <!-- MAIN VISUALIZER -->
+  <main class="hud-panel p-main">
     <div class="tabs">
-      <div class="tab active" data-view="spectrum">FFT_SPECTRUM</div>
-      <div class="tab" data-view="bars">EQ_BARS</div>
-      <div class="tab" data-view="radial">RADIAL_FFT</div>
-      <div class="tab" data-view="waterfall">WATERFALL</div>
-      <div class="tab" data-view="waveform">WAVEFORM_DAT</div>
+      <button class="tab active" data-view="spectrum">SPECTRUM</button>
+      <button class="tab" data-view="waveform">WAVEFORM</button>
+      <button class="tab" data-view="radial">RADIAL</button>
     </div>
     <div class="canvas-wrap">
       <canvas id="mainCanvas"></canvas>
     </div>
-    <div class="ctrl-row">
-      <span style="font-size:9px; color:var(--txt-dim);">POS</span>
+    <div class="slider-wrap">
       <input type="range" id="progressSlider" min="0" max="1000" value="0">
     </div>
-  </div>
+  </main>
 
-  <div class="panel p-meters">
-    <span class="title-sm">MASTER_BUS</span>
+  <!-- METERS -->
+  <aside class="hud-panel p-meters">
+    <span class="hud-title">MASTER_OUT</span>
     <div class="meter-block">
       <div class="meter-col">
-        <span style="font-size: 9px; color: var(--txt-dim);">L</span>
-        <div class="meter-bar-bg"><canvas id="chLCanvas"></canvas></div>
-        <span class="row v" id="chLVal" style="text-align: center;">-INF</span>
+        <span class="lbl">L</span>
+        <div class="meter-bg"><canvas id="chLCanvas"></canvas></div>
+        <span class="val" id="chLVal">-INF</span>
       </div>
       <div class="meter-col">
-        <span style="font-size: 9px; color: var(--txt-dim);">R</span>
-        <div class="meter-bar-bg"><canvas id="chRCanvas"></canvas></div>
-        <span class="row v" id="chRVal" style="text-align: center;">-INF</span>
+        <span class="lbl">R</span>
+        <div class="meter-bg"><canvas id="chRCanvas"></canvas></div>
+        <span class="val" id="chRVal">-INF</span>
       </div>
     </div>
-
-    <div>
-      <div class="row"><span>PK L/R</span><span class="v" id="peakLR">-INF / -INF</span></div>
-      <div class="row"><span>RMS L/R</span><span class="v" id="rmsLR">-INF / -INF</span></div>
-      <div class="row"><span>TRUE PEAK</span><span class="v" id="truePeak">--</span></div>
-
-      <div class="lufs-block">
-        <div class="row"><span>LUFS M</span><span class="v" id="lufsMom">--</span></div>
-        <div class="row"><span>LUFS S</span><span class="v" id="lufsShort">--</span></div>
-        <div class="row"><span>LUFS I</span><span class="v" id="lufsInt">--</span></div>
-      </div>
-
-      <div class="row" style="margin-top:8px;"><span>CLIP_DETECT</span><span class="v" id="clipCount">0</span></div>
-      <button class="btn" id="resetBtn" data-text="RST_MEMORY" style="width: 100%; margin-top: 8px;">RST_MEMORY</button>
+    <div class="metrics-grid">
+      <div class="metric"><span class="k">PEAK</span><span class="v" id="peakLR">-INF</span></div>
+      <div class="metric"><span class="k">RMS</span><span class="v" id="rmsLR">-INF</span></div>
+      <div class="metric"><span class="k">LUFS</span><span class="v" id="lufsInt">--</span></div>
     </div>
-  </div>
+  </aside>
 
-  <div class="panel p-bot">
-    <span class="title-sm">VECTOR_SCOPE</span>
-    <div class="canvas-wrap" style="background: transparent; border: none; overflow: visible;">
+  <!-- GONIOMETER & SPATIAL -->
+  <div class="hud-panel p-spatial">
+    <span class="hud-title">VECTOR_SCOPE</span>
+    <div class="canvas-wrap goniometer">
       <canvas id="stereoRadar"></canvas>
     </div>
+    <div class="metrics-grid mt-2">
+      <div class="metric"><span class="k">PHASE</span><span class="v" id="corrVal">0.00</span></div>
+      <div class="metric"><span class="k">WIDTH</span><span class="v" id="widthVal">0%</span></div>
+    </div>
   </div>
 
-  <div class="panel p-bot">
-    <span class="title-sm">SPATIAL_METRICS</span>
-    <div style="margin: auto 0;">
-      <div class="row"><span style="color:var(--txt-dim);">PHASE CORRELATION</span><span class="v" id="corrVal">0.00</span></div>
-      <div class="data-bar-wrap">
-        <div id="corrBar" class="data-bar-fill" style="left: 50%; width: 0%;"></div>
-        <div style="position:absolute; left:50%; top:-3px; width:1px; height:8px; background:#fff;"></div>
+  <!-- PLAYLIST & CONFIG -->
+  <div class="hud-panel p-queue">
+    <div class="queue-header">
+      <span class="hud-title">DATA_QUEUE</span>
+      <span class="lbl" id="queueCount">0_FILES</span>
+    </div>
+    <div class="playlist" id="playlistContainer">
+      <div class="empty">[ NO_ROUTING ]</div>
+    </div>
+    
+    <div class="config-grid mt-2">
+      <div class="metric">
+        <span class="k">UI_GLOW</span>
+        <input type="color" id="accentPicker" value="#d6ff00">
       </div>
-
-      <div class="row"><span style="color:var(--txt-dim);">STEREO WIDENING</span><span class="v" id="widthVal">0%</span></div>
-      <div class="data-bar-wrap">
-        <div id="widthBar" class="data-bar-fill" style="left: 0; width: 0%;"></div>
+      <div class="metric">
+        <span class="k">VOLUME</span>
+        <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.8">
       </div>
-
-      <div class="row" style="margin-top:8px;"><span style="color:var(--txt-dim);">M/S RATIO</span><span class="v" id="msRatio">0%</span></div>
     </div>
   </div>
-
-  <div class="panel p-bot">
-    <span class="title-sm">SPECTRAL_DYNAMICS</span>
-    <div style="display: flex; flex-direction: column; gap: 12px; margin: auto 0;">
-      <div class="row"><span>FREQ_CENTROID</span><span class="v" id="centroidVal">-- HZ</span></div>
-      <div class="row"><span>CREST_FACTOR</span><span class="v" id="drVal">-- DB</span></div>
-    </div>
-  </div>
-
-  <div class="panel p-bot">
-    <span class="title-sm">SYS_PARAMS + MONO</span>
-    <div class="row" style="margin-top:4px;">
-      <span style="color:var(--txt-dim);">TINT_HEX</span>
-      <input type="color" id="accentPicker" value="#d6ff00">
-    </div>
-    <div class="row">
-      <span style="color:var(--txt-dim);">FFT_BUFFER</span>
-      <select id="fftSize">
-        <option value="2048">2048</option>
-        <option value="4096" selected>4096</option>
-        <option value="8192">8192</option>
-      </select>
-    </div>
-    <div class="ctrl-row" style="margin-top:12px;">
-      <span style="font-size:9px; color:var(--txt-dim);">VOL</span>
-      <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.8">
-    </div>
-
-    <div style="margin-top:14px; border-top:1px solid var(--border); padding-top:10px;">
-      <button class="btn" id="monoBtn" data-text="MONO" style="width:100%; margin-bottom:6px;">MONO</button>
-      <button class="btn" id="bassMonoBtn" data-text="BASS_MONO" style="width:100%; margin-bottom:6px;">BASS_MONO</button>
-      <div class="row" style="margin-top:6px;">
-        <span style="color:var(--txt-dim);">BASS_FREQ</span>
-        <span id="bassFreqLabel" class="v">120 HZ</span>
-      </div>
-      <input type="range" id="bassFreq" min="20" max="500" value="120" step="5" style="width:100%; margin-top:4px;">
-    </div>
-  </div>
-
-  <div class="panel p-playlist">
-    <span class="title-sm">PLAYLIST_QUEUE</span>
-    <div class="playlist-scroll" id="playlistEl">
-      <div class="empty-hint">[ NO_TRACKS_LOADED ]</div>
-    </div>
-  </div>
-
 </div>
 
-<div class="brand-footer">
-  <span class="footer-title">PROPER MASTERING | 2026 — v2</span>
-  <span>TOOLS FOR MUSIC PRODUCERS · WORKLET + R128 APPROX</span>
-</div>
-
-<script type="module" src="./js/main.js"></script>
+<script src="js/engine.js"></script>
 </body>
 </html>
