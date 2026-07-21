@@ -4,7 +4,7 @@
 
 ---
 
-[![Instagram](https://img.shields.io/badge/INSTAGRAM-PROPER__MASTERING-000000?style=for-the-badge&logo=instagram&logoColor=d6ff00)](https://www.instagram.com/proper.mastering/) 
+[![Instagram](https://img.shields.io/badge/INSTAGRAM-PROPER__MASTERING-000000?style=flat&logo=instagram&logoColor=white)](https://www.instagram.com/proper.mastering/) 
 [![Fiverr](https://img.shields.io/badge/FIVERR-PROPER__MASTERING-1dbf73?style=flat&logo=fiverr&logoColor=white)](https://es.fiverr.com/s/5rwYa2z)
 
 |  [<kbd>▧ LABEL // Proper Sequences</kbd>](https://www.instagram.com/propersequences/)
