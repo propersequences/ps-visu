@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://i1.sndcdn.com/avatars-iRq2ZXOqfzBsgaO1-pEbIHg-t500x500.jpg" width="160" alt="Proper Sequences"/>
+<img src="https://drive.google.com/file/d/1YoLwtG-n2-xBuMKDdxVx9Jr-ZHOIjQca/view?usp=drive_link" width="160" alt="Proper Sequences"/>
 
 # PROPER v-SUALIZER
 ### // MASTERING AUDIO VISUALIZER
