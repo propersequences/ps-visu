@@ -3,8 +3,8 @@
 [English](#english) | [Español](#español) | [Nederlands](#nederlands) | [Français](#français) | [Deutsch](#deutsch)
 
 ---
-
-[![Instagram](https://img.shields.io/badge/INSTAGRAM-PROPER__MASTERING-000000?style=flat&logo=instagram&logoColor=white)](https://www.instagram.com/proper.mastering/) 
+[![Visualizer](https://img.shields.io/badge/APP-PS_|_AUDIO_VISUALIZER_%F0%9F%93%8E-000000?style=flat)](https://propersequences.github.io/ps-visu/ps-v.html)&nbsp;
+[![Instagram](https://img.shields.io/badge/INSTAGRAM-PROPER__MASTERING-000000?style=flat&logo=instagram&logoColor=white)](https://www.instagram.com/proper.mastering/)&nbsp;
 [![Fiverr](https://img.shields.io/badge/FIVERR-PROPER__MASTERING-1dbf73?style=flat&logo=fiverr&logoColor=white)](https://es.fiverr.com/s/5rwYa2z)
 
 |  [<kbd>▧ LABEL // Proper Sequences</kbd>](https://www.instagram.com/propersequences/)
