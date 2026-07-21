@@ -1,4 +1,4 @@
-# Proper v-Sualizer // AUDIO_ANALYSIS_SUBSYSTEM
+# Proper v-Sualizer // Mastering Audio Visualizer
 
 [English](#english) | [Español](#español) | [Nederlands](#nederlands) | [Français](#français) | [Deutsch](#deutsch)
 
