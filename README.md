@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://drive.google.com/file/d/1YoLwtG-n2-xBuMKDdxVx9Jr-ZHOIjQca/view?usp=drive_link" width="160" alt="Proper Sequences"/>
+<img src="https://github.com/propersequences/ps-visu/blob/main/logo%20white-01.png" width="160" alt="Proper Sequences"/>
 
 # PROPER v-SUALIZER
 ### // MASTERING AUDIO VISUALIZER
