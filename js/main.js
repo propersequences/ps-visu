@@ -1,5 +1,5 @@
 /**
- * PS-VISU v2 – bootstrap
+ * PS-VISU v2 – bootstrap (fixed seek, restored goniometer, mono controls)
  */
 
 import { AudioEngine } from './audio-engine.js';
@@ -45,6 +45,17 @@ function computePeaks(chData, pixels) {
   return peaks;
 }
 
+function forceRedraw() {
+  const cur = engine.getCurrentTime();
+  const ratio = Math.min(1, cur / Math.max(engine.duration, 0.001));
+  const { anaL, anaR } = engine.getTimeDomainAnalysers();
+  vis.setForceRed(engine.isMonoActive());
+  const centroid = vis.render(engine.getAnalyser(), anaL, anaR, meters, ratio);
+  ui.updateMeters(meters);
+  ui.updateCentroid(centroid);
+  ui.updateTime(cur, engine.duration);
+}
+
 async function loadTrack(idx, autoplay = false) {
   if (idx < 0 || idx >= playlist.length) return;
   currentTrack = idx;
@@ -59,10 +70,11 @@ async function loadTrack(idx, autoplay = false) {
       await engine.resume();
       const buf = await engine.loadBuffer(ev.target.result, 'A');
       vis.setSampleRate(engine.getSampleRate());
-      const ch = buf.getChannelData(0);
-      vis.setWaveformPeaks(computePeaks(ch, 1000));
+      const peaks = computePeaks(buf.getChannelData(0), Math.max(1000, vis.main.width || 1200));
+      vis.setWaveformPeaks(peaks);
       engine.resetMeters();
       meters.reset();
+      forceRedraw();
       if (autoplay) {
         engine.play();
         ui.setPlaying(true);
@@ -82,7 +94,9 @@ function startLoop() {
     const ratio = Math.min(1, cur / Math.max(engine.duration, 0.001));
     const doDom = (ts - lastDom) > 80;
 
-    const centroid = vis.render(engine.getAnalyser(), meters, ratio, engine.isPlaying);
+    const { anaL, anaR } = engine.getTimeDomainAnalysers();
+    vis.setForceRed(engine.isMonoActive());
+    const centroid = vis.render(engine.getAnalyser(), anaL, anaR, meters, ratio);
 
     if (doDom) {
       ui.updateMeters(meters);
@@ -100,7 +114,6 @@ function startLoop() {
   animId = requestAnimationFrame(loop);
 }
 
-// Events
 document.getElementById('fileInput').addEventListener('change', (e) => {
   const files = Array.from(e.target.files);
   if (!files.length) return;
@@ -114,6 +127,7 @@ document.getElementById('playBtn').addEventListener('click', async () => {
   if (engine.isPlaying) {
     engine.pause();
     ui.setPlaying(false);
+    forceRedraw();
   } else {
     engine.play();
     ui.setPlaying(true);
@@ -132,6 +146,7 @@ document.getElementById('nextBtn').addEventListener('click', () => {
 
 document.getElementById('progressSlider').addEventListener('input', (e) => {
   engine.seek(e.target.value / 1000);
+  forceRedraw();
 });
 
 document.getElementById('volSlider').addEventListener('input', (e) => {
@@ -162,6 +177,7 @@ document.querySelectorAll('.tab').forEach(t => {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     e.target.classList.add('active');
     vis.setView(e.target.dataset.view);
+    forceRedraw();
   });
 });
 
@@ -170,7 +186,42 @@ document.getElementById('playlistEl').addEventListener('click', (e) => {
   if (item) loadTrack(parseInt(item.dataset.idx), true);
 });
 
-// Keyboard
+const monoBtn = document.getElementById('monoBtn');
+const bassMonoBtn = document.getElementById('bassMonoBtn');
+const bassFreqSlider = document.getElementById('bassFreq');
+const bassFreqLabel = document.getElementById('bassFreqLabel');
+
+if (monoBtn) {
+  monoBtn.addEventListener('click', () => {
+    const next = !engine.monoEnabled;
+    engine.setMono(next);
+    monoBtn.classList.toggle('active', next);
+    monoBtn.style.background = next ? 'var(--alert)' : '';
+    monoBtn.style.color = next ? '#000' : '';
+    forceRedraw();
+  });
+}
+
+if (bassMonoBtn) {
+  bassMonoBtn.addEventListener('click', () => {
+    const next = !engine.bassMonoEnabled;
+    engine.setBassMono(next);
+    bassMonoBtn.classList.toggle('active', next);
+    bassMonoBtn.style.background = next ? 'var(--alert)' : '';
+    bassMonoBtn.style.color = next ? '#000' : '';
+    forceRedraw();
+  });
+}
+
+if (bassFreqSlider) {
+  bassFreqSlider.addEventListener('input', (e) => {
+    const hz = parseInt(e.target.value);
+    engine.setBassMonoFreq(hz);
+    if (bassFreqLabel) bassFreqLabel.textContent = hz + ' HZ';
+    forceRedraw();
+  });
+}
+
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT') return;
   switch (e.code) {
@@ -199,11 +250,11 @@ window.addEventListener('keydown', (e) => {
         engine.setVolume(parseFloat(vol.value));
       }
       break;
-    case 'Digit1': vis.setView('spectrum'); break;
-    case 'Digit2': vis.setView('bars'); break;
-    case 'Digit3': vis.setView('radial'); break;
-    case 'Digit4': vis.setView('waterfall'); break;
-    case 'Digit5': vis.setView('waveform'); break;
+    case 'Digit1': vis.setView('spectrum'); forceRedraw(); break;
+    case 'Digit2': vis.setView('bars'); forceRedraw(); break;
+    case 'Digit3': vis.setView('radial'); forceRedraw(); break;
+    case 'Digit4': vis.setView('waterfall'); forceRedraw(); break;
+    case 'Digit5': vis.setView('waveform'); forceRedraw(); break;
     case 'KeyE':
       ui.exportPNG(document.getElementById('mainCanvas'));
       break;
@@ -214,7 +265,6 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Mic
 document.getElementById('micBtn')?.addEventListener('click', async () => {
   try {
     await engine.startMic();
@@ -226,10 +276,13 @@ document.getElementById('micBtn')?.addEventListener('click', async () => {
   }
 });
 
-window.addEventListener('resize', () => vis.resize());
+window.addEventListener('resize', () => {
+  vis.resize();
+  forceRedraw();
+});
 window.addEventListener('load', () => {
   vis.resize();
   ui.renderPlaylist([], -1);
 });
 
-console.log('PS-VISU v2 ready');
+console.log('PS-VISU v2 ready – goniometer restored, seek fixed, mono controls');

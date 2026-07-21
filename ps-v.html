@@ -117,7 +117,7 @@
   </div>
 
   <div class="panel p-bot">
-    <span class="title-sm">SYS_PARAMS</span>
+    <span class="title-sm">SYS_PARAMS + MONO</span>
     <div class="row" style="margin-top:4px;">
       <span style="color:var(--txt-dim);">TINT_HEX</span>
       <input type="color" id="accentPicker" value="#d6ff00">
@@ -133,6 +133,16 @@
     <div class="ctrl-row" style="margin-top:12px;">
       <span style="font-size:9px; color:var(--txt-dim);">VOL</span>
       <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.8">
+    </div>
+
+    <div style="margin-top:14px; border-top:1px solid var(--border); padding-top:10px;">
+      <button class="btn" id="monoBtn" data-text="MONO" style="width:100%; margin-bottom:6px;">MONO</button>
+      <button class="btn" id="bassMonoBtn" data-text="BASS_MONO" style="width:100%; margin-bottom:6px;">BASS_MONO</button>
+      <div class="row" style="margin-top:6px;">
+        <span style="color:var(--txt-dim);">BASS_FREQ</span>
+        <span id="bassFreqLabel" class="v">120 HZ</span>
+      </div>
+      <input type="range" id="bassFreq" min="20" max="500" value="120" step="5" style="width:100%; margin-top:4px;">
     </div>
   </div>
 

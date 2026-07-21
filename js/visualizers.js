@@ -1,5 +1,5 @@
 /**
- * Canvas visualizers – spectrum, bars, radial, waterfall, waveform, goniometer
+ * Canvas visualizers – goniometer restored to original v1 behaviour
  */
 
 export class Visualizers {
@@ -13,6 +13,7 @@ export class Visualizers {
     this.waterfallCtx = null;
     this.waveformPeaks = null;
     this.sr = 44100;
+    this.forceRed = false;
   }
 
   setView(view) {
@@ -21,8 +22,8 @@ export class Visualizers {
   }
 
   setSampleRate(sr) { this.sr = sr; }
-
   setWaveformPeaks(peaks) { this.waveformPeaks = peaks; }
+  setForceRed(v) { this.forceRed = !!v; }
 
   resize() {
     [this.main, this.chL, this.chR, this.radar].forEach(c => {
@@ -60,9 +61,6 @@ export class Visualizers {
     const w = this.radar.width, h = this.radar.height;
     c.clearRect(0, 0, w, h);
 
-    c.fillStyle = 'rgba(0,0,0,0.15)';
-    c.fillRect(0, 0, w, h);
-
     c.strokeStyle = 'rgba(255,255,255,0.05)';
     c.lineWidth = 1;
     c.beginPath();
@@ -70,20 +68,21 @@ export class Visualizers {
     c.moveTo(0, h / 2); c.lineTo(w, h / 2);
     c.stroke();
 
-    c.strokeStyle = this.getAccent();
+    c.strokeStyle = this.forceRed ? '#ff003c' : this.getAccent();
     c.lineWidth = 1.5;
     c.beginPath();
     const len = tdL.length;
-    let has = false;
-    for (let i = 0; i < len; i += 3) {
+    let hasSignal = false;
+    for (let i = 0; i < len; i += 4) {
       const l = (tdL[i] - 128) / 128;
       const r = (tdR[i] - 128) / 128;
-      if (Math.abs(l) > 0.015 || Math.abs(r) > 0.015) has = true;
+      if (Math.abs(l) > 0.02 || Math.abs(r) > 0.02) hasSignal = true;
       const x = w / 2 + ((r - l) * 0.707) * (w / 2);
       const y = h / 2 - ((l + r) * 0.707) * (h / 2);
-      if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
     }
-    if (has) c.stroke();
+    if (hasSignal) c.stroke();
   }
 
   drawSpectrum(fd) {
@@ -224,31 +223,42 @@ export class Visualizers {
     c.strokeStyle = '#fff'; c.lineWidth = 1; c.stroke();
   }
 
-  render(analyser, meters, ratio, isPlaying) {
+  render(analyser, anaL, anaR, meters, ratio) {
     if (this.currentView === 'waveform') {
       this.drawWaveform(ratio);
-      return 0;
+    } else if (analyser) {
+      const fd = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(fd);
+
+      let centroid = 0;
+      if (this.currentView === 'spectrum') centroid = this.drawSpectrum(fd);
+      else if (this.currentView === 'bars') centroid = this.drawBars(fd);
+      else if (this.currentView === 'radial') centroid = this.drawRadial(fd);
+      else if (this.currentView === 'waterfall') centroid = this.drawWaterfall(fd);
+
+      this.drawMeter(this.chL, meters.rmsL, meters.peakHoldL);
+      this.drawMeter(this.chR, meters.rmsR, meters.peakHoldR);
+
+      if (anaL && anaR) {
+        const tdL = new Uint8Array(anaL.fftSize);
+        const tdR = new Uint8Array(anaR.fftSize);
+        anaL.getByteTimeDomainData(tdL);
+        anaR.getByteTimeDomainData(tdR);
+        this.drawLissajous(tdL, tdR);
+      }
+
+      return centroid;
     }
-    if (!analyser) return 0;
-
-    const fd = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(fd);
-
-    let centroid = 0;
-    if (this.currentView === 'spectrum') centroid = this.drawSpectrum(fd);
-    else if (this.currentView === 'bars') centroid = this.drawBars(fd);
-    else if (this.currentView === 'radial') centroid = this.drawRadial(fd);
-    else if (this.currentView === 'waterfall') centroid = this.drawWaterfall(fd);
-
-    const tdL = new Uint8Array(analyser.fftSize);
-    const tdR = new Uint8Array(analyser.fftSize);
-    analyser.getByteTimeDomainData(tdL);
-    for (let i = 0; i < tdL.length; i++) tdR[i] = tdL[i];
 
     this.drawMeter(this.chL, meters.rmsL, meters.peakHoldL);
     this.drawMeter(this.chR, meters.rmsR, meters.peakHoldR);
-    this.drawLissajous(tdL, tdR);
-
-    return centroid;
+    if (anaL && anaR) {
+      const tdL = new Uint8Array(anaL.fftSize);
+      const tdR = new Uint8Array(anaR.fftSize);
+      anaL.getByteTimeDomainData(tdL);
+      anaR.getByteTimeDomainData(tdR);
+      this.drawLissajous(tdL, tdR);
+    }
+    return 0;
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Audio Engine – context, Worklet, sources, mic, A/B
+ * Audio Engine – context, Worklet, dual analysers, mono / bass-mono, A/B, mic
  */
 
 export class AudioEngine {
@@ -8,6 +8,9 @@ export class AudioEngine {
     this.workletNode = null;
     this.gain = null;
     this.analyser = null;
+    this.anaL = null;
+    this.anaR = null;
+    this.splitter = null;
     this.source = null;
     this.bufferA = null;
     this.bufferB = null;
@@ -19,12 +22,17 @@ export class AudioEngine {
     this.onMetrics = onMetrics;
     this.onEnded = onEnded;
     this.micStream = null;
+
+    this.monoEnabled = false;
+    this.bassMonoEnabled = false;
+    this.bassMonoFreq = 120;
   }
 
   async init() {
     if (this.ctx) return;
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     await this.ctx.audioWorklet.addModule('./worklet/analysis-processor.js');
+
     this.workletNode = new AudioWorkletNode(this.ctx, 'analysis-processor');
     this.workletNode.port.onmessage = (e) => {
       if (e.data.type === 'metrics' && this.onMetrics) this.onMetrics(e.data);
@@ -37,7 +45,19 @@ export class AudioEngine {
     this.analyser.fftSize = 4096;
     this.analyser.smoothingTimeConstant = 0.8;
 
+    this.anaL = this.ctx.createAnalyser();
+    this.anaL.fftSize = 2048;
+    this.anaL.smoothingTimeConstant = 0.3;
+    this.anaR = this.ctx.createAnalyser();
+    this.anaR.fftSize = 2048;
+    this.anaR.smoothingTimeConstant = 0.3;
+
+    this.splitter = this.ctx.createChannelSplitter(2);
+
     this.workletNode.connect(this.gain);
+    this.gain.connect(this.splitter);
+    this.splitter.connect(this.anaL, 0);
+    this.splitter.connect(this.anaR, 1);
     this.gain.connect(this.analyser);
     this.gain.connect(this.ctx.destination);
   }
@@ -52,6 +72,22 @@ export class AudioEngine {
 
   setFFTSize(size) {
     if (this.analyser) this.analyser.fftSize = size;
+  }
+
+  setMono(enabled) {
+    this.monoEnabled = enabled;
+  }
+
+  setBassMono(enabled) {
+    this.bassMonoEnabled = enabled;
+  }
+
+  setBassMonoFreq(hz) {
+    this.bassMonoFreq = Math.max(20, Math.min(500, hz));
+  }
+
+  isMonoActive() {
+    return this.monoEnabled || this.bassMonoEnabled;
   }
 
   async loadBuffer(arrayBuffer, slot = 'A') {
@@ -123,11 +159,12 @@ export class AudioEngine {
   }
 
   seek(ratio) {
-    this.pausedAt = ratio * this.duration;
+    this.pausedAt = Math.max(0, Math.min(1, ratio)) * this.duration;
     if (this.isPlaying) {
       this.pause();
       this.play();
     }
+    return this.pausedAt;
   }
 
   getCurrentTime() {
@@ -158,6 +195,10 @@ export class AudioEngine {
 
   getAnalyser() {
     return this.analyser;
+  }
+
+  getTimeDomainAnalysers() {
+    return { anaL: this.anaL, anaR: this.anaR };
   }
 
   getSampleRate() {
