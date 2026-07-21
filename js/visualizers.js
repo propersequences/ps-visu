@@ -1,5 +1,6 @@
 /**
- * Canvas visualizers – goniometer restored to original v1 behaviour
+ * Canvas visualizers
+ * Goniometer = EXACT copy from GhostP_Analyzer_v3.html (the good one)
  */
 
 export class Visualizers {
@@ -56,6 +57,7 @@ export class Visualizers {
     }
   }
 
+  // ===== EXACT Goniometer from GhostP_Analyzer_v3.html =====
   drawLissajous(tdL, tdR) {
     const c = this.radar.getContext('2d');
     const w = this.radar.width, h = this.radar.height;
@@ -68,6 +70,7 @@ export class Visualizers {
     c.moveTo(0, h / 2); c.lineTo(w, h / 2);
     c.stroke();
 
+    // red when mono active, otherwise accent (only change from original)
     c.strokeStyle = this.forceRed ? '#ff003c' : this.getAccent();
     c.lineWidth = 1.5;
     c.beginPath();
@@ -84,6 +87,7 @@ export class Visualizers {
     }
     if (hasSignal) c.stroke();
   }
+  // ===== end exact goniometer =====
 
   drawSpectrum(fd) {
     const c = this.main.getContext('2d');
