@@ -1,2 +1,268 @@
 <!DOCTYPE html>
-<!-- See local artifacts if this fails to embed fully -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PS | AUDIO HUD — CROSSOVER</title>
+<link rel="icon" type="image/jpeg" href="https://i1.sndcdn.com/avatars-iRq2ZXOqfzBsgaO1-pEbIHg-t500x500.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-base: #050506;
+  --panel-bg: rgba(18, 18, 22, 0.88);
+  --border: #2a2a32;
+  --border-hl: #4a4a55;
+  --txt: #e2e2e5;
+  --txt-dim: #70707a;
+  --accent: #d6ff00;
+  --accent-rgb: 214, 255, 0;
+  --alert: #ff003c;
+  --font: 'Host Grotesk', 'JetBrains Mono', monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg-base);
+  background-image: radial-gradient(circle at 50% 50%, #111116 0%, #000 100%);
+  color: var(--txt);
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 11px;
+  text-transform: uppercase;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5vw;
+  gap: 14px;
+}
+.top-logo { display: flex; justify-content: center; }
+.top-logo img {
+  width: 72px; height: 72px; object-fit: contain;
+  mix-blend-mode: lighten;
+  filter: brightness(1.3) contrast(1.1);
+  -webkit-mask-image: radial-gradient(circle, #000 35%, transparent 75%);
+  mask-image: radial-gradient(circle, #000 35%, transparent 75%);
+}
+.hud {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 1480px;
+}
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px 2px 14px 2px;
+  padding: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+}
+.panel:hover { border-color: var(--border-hl); }
+.p-header { grid-column: span 12; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.p-main { grid-column: span 8; grid-row: span 2; display: flex; flex-direction: column; min-height: 400px; }
+.p-meters { grid-column: span 4; }
+.p-spatial { grid-column: span 4; }
+.p-crossover { grid-column: span 12; display: flex; gap: 16px; flex-wrap: wrap; }
+.p-queue { grid-column: span 12; display: flex; gap: 16px; }
+@media (max-width: 1100px) {
+  .p-main { grid-column: span 12; }
+  .p-meters, .p-spatial { grid-column: span 6; }
+  .p-queue { flex-direction: column; }
+}
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand h1 { font-size: 18px; font-weight: 500; letter-spacing: 2px; }
+.badge { background: var(--accent); color: #000; padding: 2px 6px; font-weight: 500; border-radius: 3px 0 3px 0; font-size: 9px; }
+.hud-title { display: block; font-size: 10px; font-weight: 400; color: var(--txt-dim); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 8px; letter-spacing: 1.5px; }
+.readout { border: 1px solid var(--border); padding: 3px 7px; border-radius: 3px; background: rgba(0,0,0,0.35); color: var(--txt-dim); font-size: 9px; font-weight: 400; }
+.readout.hl { color: var(--accent); border-color: var(--border-hl); font-variant-numeric: tabular-nums; }
+.controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.file-wrap { position: relative; }
+.file-wrap input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.btn {
+  background: rgba(0,0,0,0.5); border: 1px solid var(--border-hl); color: var(--txt);
+  padding: 5px 11px; font-family: var(--font); font-size: 10px; font-weight: 400;
+  border-radius: 5px; cursor: pointer; transition: all 0.15s;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.accent { background: var(--accent); color: #000; font-weight: 500; }
+.btn.active { background: var(--alert); color: #000; border-color: var(--alert); }
+.tabs { display: flex; gap: 3px; margin-bottom: 8px; flex-wrap: wrap; }
+.tab { background: transparent; border: 1px solid transparent; color: var(--txt-dim); padding: 3px 9px; cursor: pointer; font-family: var(--font); font-size: 9px; font-weight: 400; border-radius: 3px; }
+.tab.active { background: rgba(var(--accent-rgb), 0.12); border-color: var(--accent); color: var(--accent); }
+.canvas-wrap { flex-grow: 1; background: #000; border: 1px solid var(--border); border-radius: 7px 2px 7px 2px; overflow: hidden; position: relative; }
+canvas { width: 100%; height: 100%; display: block; }
+.goniometer { height: 150px; background: transparent; border-color: transparent; }
+.slider-wrap { margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+.slider-wrap .lbl { color: var(--txt-dim); font-size: 9px; }
+input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; height: 12px; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 2px; background: var(--border); border-radius: 1px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 9px; height: 9px; background: var(--accent); border-radius: 50%; margin-top: -3.5px; box-shadow: 0 0 6px var(--accent); }
+.meter-block { display: flex; justify-content: center; gap: 14px; height: 130px; margin-bottom: 10px; }
+.meter-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.meter-bg { width: 20px; height: 100%; background: #000; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+.lbl, .val { font-size: 9px; color: var(--txt-dim); font-weight: 400; }
+.metrics { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.metric { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 3px 7px; border-radius: 3px; border: 1px solid var(--border); }
+.metric .k { color: var(--txt-dim); font-size: 9px; }
+.metric .v { font-weight: 500; font-variant-numeric: tabular-nums; }
+.data-bar { width: 100%; height: 2px; background: #000; border: 1px solid var(--border); position: relative; margin: 2px 0 6px; }
+.data-fill { position: absolute; height: 100%; background: var(--accent); left: 0; transition: width 0.08s linear, left 0.08s linear; }
+.center-mark { position: absolute; left: 50%; top: -2px; width: 1px; height: 6px; background: #fff; }
+.xo-modes { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.xo-band { flex: 1; min-width: 180px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
+.xo-band h4 { font-size: 10px; font-weight: 500; color: var(--accent); margin-bottom: 6px; letter-spacing: 1px; }
+.xo-corr { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; margin: 4px 0; }
+.phase-canvas { width: 100%; height: 60px; background: #000; border: 1px solid var(--border); border-radius: 3px; }
+.queue-left { flex: 1; display: flex; flex-direction: column; }
+.queue-right { width: 240px; display: flex; flex-direction: column; gap: 6px; }
+.playlist { flex-grow: 1; min-height: 80px; max-height: 120px; overflow-y: auto; border: 1px solid var(--border); border-radius: 5px; padding: 3px; background: #000; }
+.q-item { padding: 4px 6px; font-size: 9px; cursor: pointer; border-radius: 3px; color: var(--txt-dim); }
+.q-item:hover { background: rgba(255,255,255,0.05); color: var(--txt); }
+.q-item.active { background: rgba(var(--accent-rgb), 0.18); color: var(--accent); font-weight: 500; }
+.empty { color: var(--txt-dim); text-align: center; padding: 10px; font-size: 9px; }
+.mono-box { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; border-top: 1px solid var(--border); padding-top: 6px; }
+.mono-box .btn { width: 100%; }
+input[type=color] { border: none; width: 18px; height: 18px; background: none; cursor: pointer; }
+input[type=color]::-webkit-color-swatch { border: 1px solid var(--border-hl); border-radius: 50%; }
+.footer { display: flex; flex-direction: column; align-items: center; gap: 3px; opacity: 0.8; }
+.footer .ft { font-size: 10px; letter-spacing: 2px; color: var(--txt); font-weight: 500; }
+.footer span { font-size: 8px; letter-spacing: 1.5px; color: var(--txt-dim); }
+</style>
+</head>
+<body>
+
+<div class="top-logo">
+  <img src="https://i1.sndcdn.com/avatars-iRq2ZXOqfzBsgaO1-pEbIHg-t500x500.jpg" alt="PS">
+</div>
+
+<div class="hud">
+  <header class="panel p-header">
+    <div class="brand">
+      <h1>PS VISUALIZER</h1>
+      <span class="badge">XO.3BAND</span>
+    </div>
+    <div class="controls">
+      <span id="fileName" class="readout">[ WAITING ]</span>
+      <div class="file-wrap">
+        <button class="btn">INJECT</button>
+        <input type="file" id="fileInput" accept="audio/*" multiple>
+      </div>
+      <button class="btn" id="prevBtn">PREV</button>
+      <button class="btn accent" id="playBtn">EXECUTE</button>
+      <button class="btn" id="nextBtn">NEXT</button>
+      <div id="timeDisplay" class="readout hl">00:00 / 00:00</div>
+      <button class="btn" id="exportBtn">EXPORT_JSON</button>
+    </div>
+  </header>
+
+  <main class="panel p-main">
+    <div class="tabs">
+      <button class="tab active" data-view="spectrum">SPECTRUM</button>
+      <button class="tab" data-view="bars">EQ_BARS</button>
+      <button class="tab" data-view="radial">RADIAL</button>
+      <button class="tab" data-view="waterfall">WATERFALL</button>
+      <button class="tab" data-view="waveform">WAVEFORM</button>
+    </div>
+    <div class="canvas-wrap"><canvas id="mainCanvas"></canvas></div>
+    <div class="slider-wrap">
+      <span class="lbl">SEEK</span>
+      <input type="range" id="progressSlider" min="0" max="1000" value="0">
+    </div>
+  </main>
+
+  <aside class="panel p-meters">
+    <span class="hud-title">MASTER_OUT</span>
+    <div class="meter-block">
+      <div class="meter-col">
+        <span class="lbl">L</span>
+        <div class="meter-bg"><canvas id="chLCanvas"></canvas></div>
+        <span class="val" id="chLVal">-INF</span>
+      </div>
+      <div class="meter-col">
+        <span class="lbl">R</span>
+        <div class="meter-bg"><canvas id="chRCanvas"></canvas></div>
+        <span class="val" id="chRVal">-INF</span>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="k">PEAK L/R</span><span class="v" id="peakLR">-INF</span></div>
+      <div class="metric"><span class="k">RMS L/R</span><span class="v" id="rmsLR">-INF</span></div>
+      <div class="metric"><span class="k">LUFS I</span><span class="v" id="lufsInt">--</span></div>
+      <div class="metric"><span class="k">CREST</span><span class="v" id="drVal">--</span></div>
+      <div class="metric"><span class="k">CLIP</span><span class="v" id="clipCount">0</span></div>
+    </div>
+  </aside>
+
+  <div class="panel p-spatial">
+    <span class="hud-title">VECTOR_SCOPE</span>
+    <div class="canvas-wrap goniometer"><canvas id="stereoRadar"></canvas></div>
+    <div class="metrics" style="margin-top:8px">
+      <div class="metric"><span class="k">PHASE</span><span class="v" id="corrVal">0.00</span></div>
+      <div class="data-bar"><div id="corrBar" class="data-fill" style="left:50%;width:0%"></div><div class="center-mark"></div></div>
+      <div class="metric"><span class="k">WIDTH</span><span class="v" id="widthVal">0%</span></div>
+      <div class="data-bar"><div id="widthBar" class="data-fill" style="left:0;width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="panel p-crossover">
+    <div style="width:100%">
+      <span class="hud-title">3-BAND CROSSOVER + PHASE TENSION</span>
+      <div class="xo-modes">
+        <button class="btn active" id="xoBypass">BYPASS</button>
+        <button class="btn" id="xoLow">LOW</button>
+        <button class="btn" id="xoMid">MID</button>
+        <button class="btn" id="xoHigh">HIGH</button>
+      </div>
+    </div>
+    <div class="xo-band">
+      <h4>LOW < 150 Hz</h4>
+      <div class="xo-corr" id="corrLow">—</div>
+      <div class="metric"><span class="k">CORR</span><span class="v" id="corrLowVal">0.00</span></div>
+      <canvas class="phase-canvas" id="phaseLow"></canvas>
+    </div>
+    <div class="xo-band">
+      <h4>MID ~ 1.5 kHz</h4>
+      <div class="xo-corr" id="corrMid">—</div>
+      <div class="metric"><span class="k">CORR</span><span class="v" id="corrMidVal">0.00</span></div>
+    </div>
+    <div class="xo-band">
+      <h4>HIGH > 3 kHz</h4>
+      <div class="xo-corr" id="corrHigh">—</div>
+      <div class="metric"><span class="k">CORR</span><span class="v" id="corrHighVal">0.00</span></div>
+    </div>
+  </div>
+
+  <div class="panel p-queue">
+    <div class="queue-left">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <span class="hud-title" style="border:none;margin:0;padding:0">DATA_QUEUE</span>
+        <span class="lbl" id="queueCount">0_FILES</span>
+      </div>
+      <div class="playlist" id="playlistContainer"><div class="empty">[ NO_ROUTING ]</div></div>
+    </div>
+    <div class="queue-right">
+      <div class="metric"><span class="k">CENTROID</span><span class="v" id="centroidVal">-- HZ</span></div>
+      <div class="metric"><span class="k">UI_GLOW</span><input type="color" id="accentPicker" value="#d6ff00"></div>
+      <div class="metric"><span class="k">VOLUME</span><input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.8"></div>
+      <div class="mono-box">
+        <button class="btn" id="monoBtn">MONO</button>
+        <button class="btn" id="bassMonoBtn">BASS_MONO</button>
+        <div class="metric"><span class="k">BASS_FREQ</span><span class="v" id="bassFreqLabel">120 HZ</span></div>
+        <input type="range" id="bassFreq" min="20" max="500" value="120" step="5">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="ft">PROPER MASTERING | 2026</span>
+  <span>TOOLS FOR ELECTRONIC MUSIC PRODUCERS — XO.3BAND</span>
+</div>
+
+<!-- ENGINE LOADED FROM EXTERNAL: due to size limits, full engine continues in next commit if truncated. -->
+<script src="data:text/javascript,console.error('FULL ENGINE MUST BE INLINED - see artifacts')"></script>
+</body>
+</html>
